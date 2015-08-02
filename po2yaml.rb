@@ -68,10 +68,10 @@ end
 
 
 def generate_yaml(pofile_name, ymlfile_name)
-  File.open(pofile_name, "r") do |pofile|
-    langcode = File.basename(pofile_name, '.po')
-    translations = {langcode => po2hash(pofile)}
-    File.open(ymlfile_name, "w") { |outfile| outfile.puts(translations.to_yaml) }
+  File.open(pofile_name, 'r') do |pofile|
+    language_code = File.basename(pofile_name, '.po')
+    translations = {language_code => po2hash(pofile)}
+    File.open(ymlfile_name, 'w') { |outfile| outfile.puts(translations.to_yaml) }
   end
 end
 
@@ -104,6 +104,7 @@ begin
     option.separator 'other options:'
     option.on '-v', '--version' do
       puts '1.0'
+      exit
     end
     option.on '-h', '--help' do
       puts option
@@ -111,10 +112,10 @@ begin
     end
   end
   options = options.to_hash
-  unless options[:input].nil? or options[:output].nil?
-    generate_yaml(options[:input], options[:output]) if options_checked(options)
-  else
+  if options[:input].nil? or options[:output].nil?
     raise Slop::Error, 'missing argument for input or output'
+  else
+    generate_yaml(options[:input], options[:output]) if options_checked(options)
   end
 rescue Slop::Error => error
   puts error.message
