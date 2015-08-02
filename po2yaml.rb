@@ -6,9 +6,9 @@
 #
 # Usage:
 #  - To create a language's yaml from a given po file
-#    po2yaml de.po de.yml
+#    po2yaml -i en.po -o en.yml
 #
-#
+# Copyright (C) 2015 Milan Unicsovics <u.milan AT gmail DOT com>
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>
 # Copyright (C) 2009 Thomas Wood
 # Copyright (C) 2009 Tom Hughes
@@ -69,7 +69,7 @@ end
 
 def generate_yaml(pofile_name, ymlfile_name)
   File.open(pofile_name, 'r') do |pofile|
-    language_code = File.basename(pofile_name, '.po')
+    language_code = File.basename(pofile_name, File.extname(pofile_name))
     translations = {language_code => po2hash(pofile)}
     File.open(ymlfile_name, 'w') { |outfile| outfile.puts(translations.to_yaml) }
   end
@@ -79,14 +79,10 @@ end
 
 def options_checked(options)
   if File.readable? options[:input]
-    if File.exists? options[:output]
-      if File.writable? options[:output]
-        return true
-      else
-        $stderr.puts "Error: Specified YML file #{options[:output]} is not writable."
-      end
+    if File.writable? Dir.pwd
+      return true
     else
-      $stderr.puts "Error: Specified YML file #{options[:output]} is already exist."
+      $stderr.puts "Error: Specified YML file #{options[:output]} can not be created."
     end
   else
     $stderr.puts "Error: Specified PO file #{options[:input]} is not readable."
