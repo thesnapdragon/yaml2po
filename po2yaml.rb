@@ -31,6 +31,7 @@ require 'rubygems'
 require 'bundler/setup'
 
 require 'yaml'
+require 'slop'
 
 
 
@@ -59,9 +60,7 @@ def po2hash(pofile)
       string = msgstr
     end
 
-    if !path.empty? and !string.empty?
-      add_translation(translations, path, string)
-    end
+    add_translation(translations, path, string) unless path.empty? or string.empty?
   end
   translations
 end
@@ -69,30 +68,54 @@ end
 
 
 def generate_yaml(pofile_name, ymlfile_name)
-  if File.exists? pofile_name
-    File.open(pofile_name, "r") do |pofile|
-      langcode = File.basename(pofile_name, '.po')
-      translations = {langcode => po2hash(pofile)}
-      File.open(ymlfile_name, "w") { |outfile| outfile.puts(translations.to_yaml) }
-    end
-  else
-    $stderr.puts("\nError: Specified PO file \"#{pofile_name}\" does not exist.\n\n")
+  File.open(pofile_name, "r") do |pofile|
+    langcode = File.basename(pofile_name, '.po')
+    translations = {langcode => po2hash(pofile)}
+    File.open(ymlfile_name, "w") { |outfile| outfile.puts(translations.to_yaml) }
   end
 end
 
 
 
-def print_usage()
-  puts("\nUsage:\n")
-  puts("  - To create a language's yaml from a given po file\n")
-  puts("    po2yaml de.po de.yml\n\n")
+def options_checked(options)
+  if File.readable? options[:input]
+    if File.exists? options[:output]
+      if File.writable? options[:output]
+        return true
+      else
+        $stderr.puts "Error: Specified YML file #{options[:output]} is not writable."
+      end
+    else
+      $stderr.puts "Error: Specified YML file #{options[:output]} is already exist."
+    end
+  else
+    $stderr.puts "Error: Specified PO file #{options[:input]} is not readable."
+  end
+  false
 end
 
 
 
-if ARGV.size == 2
-  generate_yaml(ARGV[0], ARGV[1])
-  exit
+begin
+  options = Slop.parse do |option|
+    option.string '-i', '--input', 'input PO file'
+    option.string '-o', '--output', 'output YAML file'
+    option.separator ''
+    option.separator 'other options:'
+    option.on '-v', '--version' do
+      puts '1.0'
+    end
+    option.on '-h', '--help' do
+      puts option
+      exit
+    end
+  end
+  options = options.to_hash
+  unless options[:input].nil? or options[:output].nil?
+    generate_yaml(options[:input], options[:output]) if options_checked(options)
+  else
+    raise Slop::Error, 'missing argument for input or output'
+  end
+rescue Slop::Error => error
+  puts error.message
 end
-
-print_usage()
