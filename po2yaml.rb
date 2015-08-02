@@ -31,55 +31,49 @@ require 'yaml'
 
 
 
-def add_translation(hash, keys, value)
-  key = keys.shift
-  if keys.empty?
-    hash[key] = value
+def add_translation(translations, path, string)
+  key = path.shift
+  if path.empty?
+    translations[key] = string
   else
-    unless hash.has_key? key
-      hash[key] = {}
-    end
-    add_translation(hash[key], keys, value)
+    translations[key] = {} unless translations.has_key? key
+    add_translation(translations[key], path, string)
   end
-  hash
+  translations
 end
 
 
 
-def po2hash(f)
-  trs = {}
+def po2hash(pofile)
+  translations = {}
   path = []
-  msgstr = ''
-  f.each_line do |line|
+  string = ''
+  pofile.each_line do |line|
     line.strip!
-    if line[0..8] == 'msgctxt "'
-      path = line[9..-2].split(':')
-    elsif line[0..7] == 'msgstr "'
-      # TODO convert escaped characters
-      msgstr = line[8..-2]
+    if /^msgctxt "(?<msgctxt>.*)"$/ =~ line
+      path = msgctxt.split(':')
+    elsif /^msgstr "(?<msgstr>.*)"$/ =~ line
+      string = msgstr
     end
 
-    if !path.empty? and !msgstr.empty?
-      add_translation(trs, path, msgstr)
-      path = []
-      msgstr = ''
+    if !path.empty? and !string.empty?
+      add_translation(translations, path, string)
     end
   end
-  trs
+  translations
 end
 
 
 
-def generate_yaml(filename, outfilename)
-  if File.exists? filename
-    File.open(filename, "r") do |pofile|
-      langcode = File.basename(filename, '.po')
-      tr = {langcode: po2hash(pofile)}
-      outfile = File.new(outfilename, "w")
-      outfile.puts(tr.to_yaml)
+def generate_yaml(pofile_name, ymlfile_name)
+  if File.exists? pofile_name
+    File.open(pofile_name, "r") do |pofile|
+      langcode = File.basename(pofile_name, '.po')
+      translations = {langcode => po2hash(pofile)}
+      File.open(ymlfile_name, "w") { |outfile| outfile.puts(translations.to_yaml) }
     end
   else
-    $stderr.puts("\nError: Specified PO file \"#{filename}\" does not exist.\n\n")
+    $stderr.puts("\nError: Specified PO file \"#{pofile_name}\" does not exist.\n\n")
   end
 end
 
