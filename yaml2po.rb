@@ -7,12 +7,9 @@
 #
 # Usage:
 #  - To create a 'master' .pot
-#    yaml2po -P en.yml translations.pot
+#    yaml2po -i en.yml -o en.pot
 #
-#  - To create a language's .po
-#    yaml2po -l de -t en.yml de.yml de.po
-#
-#
+# Copyright (C) 2015 Milan Unicsovics <u.milan AT gmail DOT com>
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>
 # Copyright (C) 2009 Thomas Wood
 # Copyright (C) 2009 Tom Hughes
@@ -36,138 +33,111 @@ require 'bundler/setup'
 
 require 'yaml'
 require 'time'
+require 'slop'
 
 
 
-def process_msgid_msgstr(string)
-  # Escape the " characters and correctly output multiline strings both in msgid and msgstr
-  if string.is_a? Hash
-    new_string = ''
-  else
-    new_string = string.gsub("\"", "\\\"")
-    new_string = new_string.gsub("\n", "\"\n\"")
-  end
-  return new_string
+def add_header(potfile, language_code)
+  current_time = Time.now.strftime('%Y-%m-%-d %H:%M%z')
+  header = <<HEADER
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE\'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\\n"
+"Report-Msgid-Bugs-To: <EMAIL@ADDRESS>\\n"
+"POT-Creation-Date: #{current_time}\\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
+"Language-Team: #{language_code} <#{language_code}@li.org>\\n"
+"MIME-Version: 1.0\\n"
+"Content-Type: text/plain; charset=UTF-8\\n"
+"Content-Transfer-Encoding: 8bit\\n"
+
+HEADER
+  potfile.write header
 end
 
 
 
-def iterate(hash, fhash={}, path='', outfile=$stdout)
-  postr = ''
-  hash.each { |key, val|
-    fhash[key] = {} unless fhash.has_key? key
-    if val.is_a? Hash
-      fhash[key] = {} unless fhash[key].is_a? Hash
-      iterate(val, fhash[key], path+key+':', outfile)
-    elsif val.nil?
-      puts("Empty key:   #{path}#{key}")
-    elsif val.is_a? String
-      outfile.puts("")
-      outfile.puts("msgctxt \"#{path}#{key}\"")
-      new_source = process_msgid_msgstr(val)
-      outfile.puts("msgid \"#{new_source}\"")
-      new_translation = process_msgid_msgstr(fhash[key])
-      outfile.puts("msgstr \"#{new_translation}\"")
+def flatten_hash(my_hash, parent = [])
+  my_hash.flat_map do |key, value|
+    case value
+      when Hash then
+        flatten_hash(value, parent+[key])
+      else
+        [(parent+[key]).join(':'), value]
     end
-  }
-end
-
-
-
-def print_header(lang='LANGUAGE', outfile=$stdout)
-  outfile.puts('# SOME DESCRIPTIVE TITLE.')
-  outfile.puts('# Copyright (C) YEAR THE PACKAGE\'S COPYRIGHT HOLDER')
-  outfile.puts('# This file is distributed under the same license as the PACKAGE package.')
-  outfile.puts('# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.')
-  outfile.puts('#')
-  if lang == 'LANGUAGE'
-    outfile.puts('#, fuzzy')
-  end
-  outfile.puts('msgid ""')
-  outfile.puts('msgstr ""')
-  outfile.puts('"Project-Id-Version: PACKAGE VERSION\n"')
-  outfile.puts('"Report-Msgid-Bugs-To: \n"')
-  current_time = Time.now.strftime("%Y-%m-%-d %H:%M%z")
-  outfile.puts("\"POT-Creation-Date: #{current_time}\\n\"")
-  if lang == 'LANGUAGE'
-    outfile.puts('"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"')
-  else
-    outfile.puts("\"PO-Revision-Date: #{current_time}\\n\"")
-  end
-  outfile.puts('"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"')
-  if lang == 'LANGUAGE'
-    outfile.puts("\"Language-Team: #{lang} <LL@li.org>\\n\"")
-  else
-    outfile.puts("\"Language-Team: #{lang} <#{lang}@li.org>\\n\"")
-  end
-  outfile.puts('"MIME-Version: 1.0\n"')
-  outfile.puts('"Content-Type: text/plain; charset=UTF-8\n"')
-  outfile.puts('"Content-Transfer-Encoding: 8bit\n"')
-  # TODO if it is no POT file, put the corresponding plural string for the given language code
-  outfile.puts('"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"')
-end
-
-
-
-def generate_pot(engfilename, outfilename)
-  if File.exists? engfilename
-    engfile = YAML::load_file(engfilename)
-    File.open(outfilename, "w") do |outfile|
-      print_header('LANGUAGE', outfile)
-      iterate(engfile['en'], {}, '', outfile)
-    end
-  else
-    $stderr.puts("\nError: Specified YAML file \"#{engfilename}\" does not exist.\n\n")
   end
 end
 
 
 
-def lang2po(lang, engfilename, langfilename, outfilename)
-  if File.exists? engfilename
-    if File.exists? langfilename
-      engfile = YAML::load_file(engfilename)
-      langfile = YAML::load_file(langfilename)
-      File.open(outfilename, "w") do |outfile|
-        print_header(lang, outfile)
-        iterate(engfile['en'], langfile[lang], '', outfile)
+def escape(string)
+  new_string = string.gsub("\"", "\\\"")
+  new_string.gsub("\n", "\"\n\"")
+end
+
+
+
+def generate_pot(ymlfile_name, potfile_name)
+  pot_language_code = File.basename(potfile_name, File.extname(potfile_name))
+  yml = YAML.load_file(ymlfile_name)[pot_language_code]
+  translations = Hash[*flatten_hash(yml)]
+  File.open(potfile_name, 'w') do |potfile|
+    add_header(potfile, pot_language_code)
+    translations.each do |path, translation|
+      if translation.is_a? String
+        potfile.puts "msgctxt \"#{escape(path)}\""
+        potfile.puts "msgid \"#{escape(translation)}\""
+        potfile.puts "msgstr \"#{escape(translation)}\""
+        potfile.puts ''
       end
+    end
+  end
+end
+
+
+
+def options_checked(options)
+  if File.readable? options[:input]
+    if File.writable? Dir.pwd
+      return true
     else
-      $stderr.puts("\nError: Specified YAML file \"#{langfilename}\" does not exist.\n\n")
+      $stderr.puts "Error: Specified POT file #{options[:output]} can not be created."
     end
   else
-    $stderr.puts("\nError: Specified YAML file \"#{engfilename}\" does not exist.\n\n")
+    $stderr.puts "Error: Specified YML file #{options[:input]} is not readable."
   end
+  false
 end
 
 
 
-def print_usage()
-  puts("\nUsage:\n")
-  puts("  - To create a 'master' .pot\n")
-  puts("    yaml2po -P en.yml file.pot\n")
-  puts("\n")
-  puts("  - To create a language's .po\n")
-  puts("    yaml2po -l de -t en.yml de.yml de.po\n\n")
-end
-
-
-
-opt = ARGV[0]
-
-if opt == '-P'
-  if (ARGV.size == 3)
-    generate_pot(ARGV[1], ARGV[2])
-    exit
+begin
+  options = Slop.parse do |option|
+    option.string '-i', '--input', 'input YML file'
+    option.string '-o', '--output', 'output POT file'
+    option.separator ''
+    option.separator 'other options:'
+    option.on '-v', '--version' do
+      puts '1.0'
+      exit
+    end
+    option.on '-h', '--help' do
+      puts option
+      exit
+    end
   end
-elsif opt == '-l'
-  if (ARGV.size == 6)
-    lang2po(ARGV[1], ARGV[3], ARGV[4], ARGV[5])
-    exit
+  options = options.to_hash
+  if options[:input].nil? or options[:output].nil?
+    raise Slop::Error, 'missing argument for input or output'
+  else
+    generate_pot(options[:input], options[:output]) if options_checked(options)
   end
+rescue Slop::Error => error
+  puts error.message
 end
-
-print_usage()
-
-
-
