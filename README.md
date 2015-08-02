@@ -11,30 +11,19 @@ Developed from the homonymous scripts found in http://git.openstreetmap.org/rail
 
 ## yaml2po usage mode
 
- * Create a 'master' POT file from source english translation
+ * Create a language's POT from a given YML file
 
 ~~~ {.bash}
- $ yaml2po -P en.yml file.pot
+ $ yaml2po en.yml en.pot
 ~~~
-
-*-P* option indicates the template YAML file (the english translation one)
-
- * Create a language's .po from specified existing translation ::
-
-~~~ {.bash}
- $ yaml2po -l de -t en.yml de.yml de.po
-~~~
-
-*-l* option indicates the language code in the YAML translation file    
-*-t* option indicates the template YAML file (the english translation one)
 
 
 ## po2yaml usage mode
 
- * Create a language's yaml from a given PO file
+ * Create a language's YML from a given PO file
 
 ~~~ {.bash}
- $ po2yaml de.po de.yml
+ $ po2yaml en.po en.yml
 ~~~
 
 ## License
