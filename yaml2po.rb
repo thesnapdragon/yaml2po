@@ -7,10 +7,10 @@
 #
 # Usage:
 #  - To create a 'master' .pot
-#    yaml2po -P en.yml > translations.pot
+#    yaml2po -P en.yml translations.pot
 #
 #  - To create a language's .po
-#    yaml2po -l de -t en.yml de.yml > de.po
+#    yaml2po -l de -t en.yml de.yml de.po
 #
 #
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>
@@ -31,9 +31,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require "yaml"
-require "optparse"
-require "time"
+require 'rubygems'
+require 'bundler/setup'
+
+require 'yaml'
+require 'time'
 
 
 
@@ -59,7 +61,7 @@ def iterate(hash, fhash={}, path='', outfile=$stdout)
       iterate(val, fhash[key], path+key+':', outfile)
     elsif val.nil?
       puts("Empty key:   #{path}#{key}")
-    else
+    elsif val.is_a? String
       outfile.puts("")
       outfile.puts("msgctxt \"#{path}#{key}\"")
       new_source = process_msgid_msgstr(val)
@@ -110,7 +112,7 @@ end
 def generate_pot(engfilename, outfilename)
   if File.exists? engfilename
     engfile = YAML::load_file(engfilename)
-    File.new(outfilename, "w") do |outfile|
+    File.open(outfilename, "w") do |outfile|
       print_header('LANGUAGE', outfile)
       iterate(engfile['en'], {}, '', outfile)
     end
@@ -126,7 +128,7 @@ def lang2po(lang, engfilename, langfilename, outfilename)
     if File.exists? langfilename
       engfile = YAML::load_file(engfilename)
       langfile = YAML::load_file(langfilename)
-      File.new(outfilename, "w") do |outfile|
+      File.open(outfilename, "w") do |outfile|
         print_header(lang, outfile)
         iterate(engfile['en'], langfile[lang], '', outfile)
       end
