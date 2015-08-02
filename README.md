@@ -1,10 +1,11 @@
 # yaml2po and po2yaml
 
-yaml2po
-  ~ script for converting .yml or .yaml translation files to Gettext PO or POT
+**yaml2po** is a script for converting YML or YAML translation files to Gettext PO or POT
 
-po2yaml
-  ~ script for converting to Gettext PO to .yml or .yaml translation files
+**po2yaml** is a script for converting to Gettext PO to YML or YAML translation files
+
+* [PO file format reference](https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html)
+* [YML file format reference](http://www.yaml.org/)
 
 Developed from the homonymous scripts found in http://git.openstreetmap.org/rails.git/tree/HEAD:/script/locale
 
