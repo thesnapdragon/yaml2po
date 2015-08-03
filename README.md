@@ -11,10 +11,16 @@ Developed from the homonymous scripts found in http://git.openstreetmap.org/rail
 
 ## yaml2po usage mode
 
- * Create a language's POT from a given YML file
+ * Create a POT from a given YML file
 
 ~~~ {.bash}
  $ yaml2po en.yml en.pot
+~~~
+
+ * Create a language's PO from a given YML file
+
+~~~ {.bash}
+ $ yaml2po en.yml en.po
 ~~~
 
 

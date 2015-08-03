@@ -8,6 +8,8 @@
 # Usage:
 #  - To create a 'master' .pot
 #    yaml2po -i en.yml -o en.pot
+#  - To create a language's .po file
+#    yaml2po -i en.yml -o en.po
 #
 # Copyright (C) 2015 Milan Unicsovics <u.milan AT gmail DOT com>
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>
@@ -78,13 +80,14 @@ end
 
 def escape(string)
   new_string = string.gsub("\"", "\\\"")
-  new_string.gsub("\n", "\"\n\"")
+  new_string.gsub("\n", "\\n")
 end
 
 
 
 def generate_pot(ymlfile_name, potfile_name)
-  pot_language_code = File.basename(potfile_name, File.extname(potfile_name))
+  potfile_extension = File.extname(potfile_name)
+  pot_language_code = File.basename(potfile_name, potfile_extension)
   yml = YAML.load_file(ymlfile_name)[pot_language_code]
   translations = Hash[*flatten_hash(yml)]
   File.open(potfile_name, 'w') do |potfile|
@@ -93,7 +96,11 @@ def generate_pot(ymlfile_name, potfile_name)
       if translation.is_a? String
         potfile.puts "msgctxt \"#{escape(path)}\""
         potfile.puts "msgid \"#{escape(translation)}\""
-        potfile.puts "msgstr \"#{escape(translation)}\""
+        if potfile_extension == '.pot'
+          potfile.puts 'msgstr ""'
+        elsif potfile_extension == '.po'
+          potfile.puts "msgstr \"#{escape(translation)}\""
+        end
         potfile.puts ''
       end
     end
