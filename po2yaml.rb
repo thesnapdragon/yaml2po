@@ -59,8 +59,11 @@ def po2hash(pofile)
     elsif /^msgstr "(?<msgstr>.*)"$/ =~ line
       string = msgstr
     end
-
-    add_translation(translations, path, string) unless path.empty? or string.empty?
+    unless path.empty? or string.empty?
+      add_translation(translations, path, string)
+      path = ''
+      string = ''
+    end
   end
   translations
 end
@@ -71,7 +74,7 @@ def generate_yaml(pofile_name, ymlfile_name)
   File.open(pofile_name, 'r') do |pofile|
     language_code = File.basename(pofile_name, File.extname(pofile_name))
     translations = {language_code => po2hash(pofile)}
-    File.open(ymlfile_name, 'w') { |outfile| outfile.puts(translations.to_yaml) }
+    File.open(ymlfile_name, 'w') { |outfile| outfile.puts(translations.to_yaml(options = {line_width: -1})) }
   end
 end
 
