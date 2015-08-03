@@ -6,7 +6,7 @@
 #
 # Usage:
 #  - To create a language's yaml from a given po file
-#    po2yaml -i en.po -o en.yml
+#    po2yaml.rb -i en.po -o en.yml
 #
 # Copyright (C) 2015 Milan Unicsovics <u.milan AT gmail DOT com>
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>

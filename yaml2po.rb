@@ -7,9 +7,9 @@
 #
 # Usage:
 #  - To create a 'master' .pot
-#    yaml2po -i en.yml -o en.pot
+#    yaml2po.rb -i en.yml -o en.pot
 #  - To create a language's .po file
-#    yaml2po -i en.yml -o en.po
+#    yaml2po.rb -i en.yml -o en.po
 #
 # Copyright (C) 2015 Milan Unicsovics <u.milan AT gmail DOT com>
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>
