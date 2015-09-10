@@ -85,24 +85,38 @@ end
 
 
 
-def generate_pot(ymlfile_name, potfile_name)
+def get_language_code(file_name)
+  extension = File.extname(file_name)
+  File.basename(file_name, extension)
+end
+
+
+
+def get_translations(file_name, ymlfile_name)
+  language_code = get_language_code(file_name)
+  yml = YAML.load_file(ymlfile_name).to_hash[language_code]
+  Hash[*flatten_hash(yml)]
+end
+
+
+
+def generate_pot(ymlfile_name, potfile_name, basefile_name)
+  translations = get_translations(potfile_name, ymlfile_name)
+  base_translations = get_translations(basefile_name, basefile_name)
+  pot_language_code = get_language_code(potfile_name)
   potfile_extension = File.extname(potfile_name)
-  pot_language_code = File.basename(potfile_name, potfile_extension)
-  yml = YAML.load_file(ymlfile_name)[pot_language_code]
-  translations = Hash[*flatten_hash(yml)]
+
   File.open(potfile_name, 'w') do |potfile|
     add_header(potfile, pot_language_code)
     translations.each do |path, translation|
-      if translation.is_a? String
-        potfile.puts "msgctxt \"#{escape(path)}\""
-        potfile.puts "msgid \"#{escape(translation)}\""
-        if potfile_extension == '.pot'
-          potfile.puts 'msgstr ""'
-        elsif potfile_extension == '.po'
-          potfile.puts "msgstr \"#{escape(translation)}\""
-        end
-        potfile.puts ''
+      potfile.puts "msgctxt \"#{escape(path)}\""
+      potfile.puts "msgid \"#{escape(base_translations[path])}\""
+      if potfile_extension == '.pot'
+        potfile.puts 'msgstr ""'
+      elsif potfile_extension == '.po'
+        potfile.puts "msgstr \"#{escape(translation)}\""
       end
+      potfile.puts ''
     end
   end
 end
@@ -128,6 +142,7 @@ begin
   options = Slop.parse do |option|
     option.string '-i', '--input', 'input YML file'
     option.string '-o', '--output', 'output POT file'
+    option.string '-b', '--base', 'base YML file'
     option.separator ''
     option.separator 'other options:'
     option.on '-v', '--version' do
@@ -143,7 +158,7 @@ begin
   if options[:input].nil? or options[:output].nil?
     raise Slop::Error, 'missing argument for input or output'
   else
-    generate_pot(options[:input], options[:output]) if options_checked(options)
+    generate_pot(options[:input], options[:output], options[:base]) if options_checked(options)
   end
 rescue Slop::Error => error
   puts error.message
