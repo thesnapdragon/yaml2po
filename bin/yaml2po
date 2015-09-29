@@ -7,9 +7,9 @@
 #
 # Usage:
 #  - To create a 'master' .pot
-#    yaml2po.rb -i en.yml -o en.pot
+#    yaml2po -i ru.yml -o ru.pot -b en.yml
 #  - To create a language's .po file
-#    yaml2po.rb -i en.yml -o en.po
+#    yaml2po -i ru.yml -o ru.po -b en.yml
 #
 # Copyright (C) 2015 Milan Unicsovics <u.milan AT gmail DOT com>
 # Copyright (C) 2012 Leandro Regueiro <leandro.regueiro AT gmail DOT com>
@@ -146,7 +146,7 @@ begin
     option.separator ''
     option.separator 'other options:'
     option.on '-v', '--version' do
-      puts '1.0'
+      puts '1.0.0'
       exit
     end
     option.on '-h', '--help' do
