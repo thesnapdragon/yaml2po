@@ -109,14 +109,16 @@ def generate_pot(ymlfile_name, potfile_name, basefile_name)
   File.open(potfile_name, 'w') do |potfile|
     add_header(potfile, pot_language_code)
     translations.each do |path, translation|
-      potfile.puts "msgctxt \"#{escape(path)}\""
-      potfile.puts "msgid \"#{escape(base_translations[path])}\""
-      if potfile_extension == '.pot'
-        potfile.puts 'msgstr ""'
-      elsif potfile_extension == '.po'
-        potfile.puts "msgstr \"#{escape(translation)}\""
+      if base_translations[path]
+        potfile.puts "msgctxt \"#{escape(path)}\""
+        potfile.puts "msgid \"#{escape(base_translations[path])}\""
+        if potfile_extension == '.pot'
+          potfile.puts 'msgstr ""'
+        elsif potfile_extension == '.po'
+          potfile.puts "msgstr \"#{escape(translation)}\""
+        end
+        potfile.puts ''
       end
-      potfile.puts ''
     end
   end
 end
