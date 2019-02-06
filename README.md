@@ -14,13 +14,13 @@ Developed from the homonymous scripts found in http://git.openstreetmap.org/rail
  * Create a POT from a given YML file
 
 ~~~ {.bash}
- $ yaml2po.rb -i en.yml -o en.pot
+ $ yaml2po.rb -b en.yml -i de.yml -o de.pot
 ~~~
 
  * Create a language's PO from a given YML file
 
 ~~~ {.bash}
- $ yaml2po.rb -i en.yml -o en.po
+ $ yaml2po.rb -b en.yml -i de.yml -o de.po
 ~~~
 
 
